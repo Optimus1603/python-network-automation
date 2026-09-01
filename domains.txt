@@ -1,0 +1,6 @@
+google.com
+github.com
+chatgpt.com
+whatsapp.com
+instagram.com
+this-domain-does-not-exist-12345.com
