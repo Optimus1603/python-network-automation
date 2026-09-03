@@ -52,84 +52,99 @@ def check_dns(hostname):
         return None
 
 
-devices = []
+def load_devices():
+    devices = []
 
-with open("devices.txt", "r") as file:
-    for line in file:
-        line = line.strip()
+    with open("devices.txt", "r") as file:
+        for line in file:
+            line = line.strip()
 
-        name, ip, port = line.split(",")
+            name, ip, port = line.split(",")
 
-        devices.append({
-            "name": name,
-            "ip": ip,
-            "port": int(port)
-        })
+            devices.append({
+                "name": name,
+                "ip": ip,
+                "port": int(port)
+            })
 
-
-log_file = "network_results.csv"
-
-with open(log_file, "a", newline="") as file:
-    writer = csv.writer(file)
-
-    if file.tell() == 0:
-        writer.writerow([
-            "timestamp",
-            "device",
-            "ping_status",
-            "rtt_ms",
-            "packet_loss",
-            "tcp_port",
-            "tcp_status"
-        ])
+    return devices
 
 
-for device in devices:
-    ping_success, rtt, packet_loss = check_ping(device["ip"])
+def load_domains():
+    domains = []
 
-    if ping_success:
-        ping_status = "UP"
-    else:
-        ping_status = "DOWN"
+    with open("domains.txt", "r") as file:
+        for line in file:
+            domain = line.strip()
+            domains.append(domain)
 
-    if rtt is None:
-        rtt_display = "N/A"
-    else:
-        rtt_display = str(round(rtt, 2)) + " ms"
+    return domains
 
-    if check_tcp(device["ip"], device["port"]):
-        tcp_status = "OPEN"
-    else:
-        tcp_status = "NOT AVAILABLE"
 
-    print(
-        device["name"],
-        "| Ping:", ping_status,
-        "| RTT:", rtt_display,
-        "| Loss:", packet_loss,
-        "| TCP", device["port"], ":", tcp_status
-    )
+if __name__ == "__main__":
+
+    devices = load_devices()
+
+    log_file = "network_results.csv"
 
     with open(log_file, "a", newline="") as file:
         writer = csv.writer(file)
 
-        writer.writerow([
-            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        if file.tell() == 0:
+            writer.writerow([
+                "timestamp",
+                "device",
+                "ping_status",
+                "rtt_ms",
+                "packet_loss",
+                "tcp_port",
+                "tcp_status"
+            ])
+
+    for device in devices:
+        ping_success, rtt, packet_loss = check_ping(device["ip"])
+
+        if ping_success:
+            ping_status = "UP"
+        else:
+            ping_status = "DOWN"
+
+        if rtt is None:
+            rtt_display = "N/A"
+        else:
+            rtt_display = str(round(rtt, 2)) + " ms"
+
+        if check_tcp(device["ip"], device["port"]):
+            tcp_status = "OPEN"
+        else:
+            tcp_status = "NOT AVAILABLE"
+
+        print(
             device["name"],
-            ping_status,
-            rtt if rtt is not None else "",
-            packet_loss,
-            device["port"],
-            tcp_status
-        ])
+            "| Ping:", ping_status,
+            "| RTT:", rtt_display,
+            "| Loss:", packet_loss,
+            "| TCP", device["port"], ":", tcp_status
+        )
 
+        with open(log_file, "a", newline="") as file:
+            writer = csv.writer(file)
 
-print("\n--- DNS Checks ---")
+            writer.writerow([
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                device["name"],
+                ping_status,
+                rtt if rtt is not None else "",
+                packet_loss,
+                device["port"],
+                tcp_status
+            ])
 
-with open("domains.txt", "r") as file:
-    for line in file:
-        domain = line.strip()
+    print("\n--- DNS Checks ---")
 
+    domains = load_domains()
+
+    for domain in domains:
         result = check_dns(domain)
 
         if result:
